@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>金幣與補品計算器</title>
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: "Segoe UI", "微軟正黑體", sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 30px;
+        }
+
+        form {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        input[type="number"] {
+            padding: 5px;
+            width: 200px;
+            margin-top: 5px;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-weight: bold;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 30px;
+            font-size: 18px;
+        }
+
+        .result h3 {
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 金幣與補品計算器</h1>
+        <form method="POST">
+            <label>目前金幣：
+                <input type="number" name="gold_end" required>
+            </label>
+
+            <label>剩餘 HM 數量：
+                <input type="number" name="hm_end" required>
+            </label>
+
+            <label>剩餘 PU 數量：
+                <input type="number" name="pu_end" required>
+            </label>
+
+            <button type="submit">計算</button>
+        </form>
+
+        {% if result %}
+        <div class="result">
+            <h2>🔎 計算結果：</h2>
+            <ul style="list-style-type:none; padding-left:0;">
+                <li>金幣增加：{{ result.gold_gain }} 元</li>
+                <li>HM 消耗：{{ result.hm_used }} 瓶（{{ result.hm_cost }} 元）</li>
+                <li>PU 消耗：{{ result.pu_used }} 瓶（{{ result.pu_cost }} 元）</li>
+                <li>總成本：{{ result.total_cost }} 元</li>
+                <li>淨利：{{ result.net_profit }} 元</li>
+            </ul>
+            <h3>{{ result.status }}</h3>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
