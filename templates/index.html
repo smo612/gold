@@ -179,6 +179,23 @@
     
                 container.classList.remove("hidden");
             }
+                        
+            {% if result %}
+                const imgBox = document.createElement("div");
+                imgBox.style.textAlign = "center";
+                imgBox.style.marginTop = "60px";
+                let imgPath = "";
+                {% if result.net_profit > 0 %}
+                    imgPath = "/static/docs/positive.png";
+                {% elif result.net_profit < 0 %}
+                    imgPath = "/static/docs/negative.png";
+                {% else %}
+                    imgPath = "/static/docs/equal.png";
+                {% endif %}
+
+                imgBox.innerHTML = `<img src="${imgPath}" style="width: 480px;">`;
+                container.appendChild(imgBox);
+            {% endif %}
         }
     
         window.addEventListener("DOMContentLoaded", function () {
