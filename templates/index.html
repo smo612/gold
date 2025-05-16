@@ -5,102 +5,170 @@
     <title>金幣與補品計算器</title>
     <style>
         body {
+            font-family: "微軟正黑體", sans-serif;
             background-color: #f9f9f9;
-            font-family: "Segoe UI", "微軟正黑體", sans-serif;
-            margin: 0;
-            padding: 0;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
         }
 
         .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            text-align: center;
-        }
-
-        h1 {
-            font-size: 32px;
-            margin-bottom: 30px;
-        }
-
-        form {
             background: white;
             padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 950px;
         }
 
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: bold;
+        .flex-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .left-col, .right-col {
+            width: 48%;
+        }
+
+        .potion-block {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .potion-block img {
+            width: 48px;
+            height: 48px;
+            margin-right: 15px;
+        }
+
+        .left-col img {
+            width: 24px;
+            vertical-align: middle;
+            margin-right: 5px;
         }
 
         input[type="number"] {
-            padding: 5px;
-            width: 200px;
-            margin-top: 5px;
+            width: 70px;
+            margin: 2px 5px;
         }
 
         button {
-            margin-top: 20px;
-            padding: 10px 20px;
-            font-weight: bold;
-            background-color: #4CAF50;
+            background: #4CAF50;
             color: white;
+            padding: 10px 20px;
             border: none;
-            border-radius: 5px;
+            font-weight: bold;
             cursor: pointer;
+            margin-top: 20px;
         }
 
-        button:hover {
-            background-color: #45a049;
+        .hidden {
+            display: none;
+        }
+
+        ul {
+            padding-left: 20px;
         }
 
         .result {
             margin-top: 30px;
-            font-size: 18px;
         }
 
         .result h3 {
-            margin-top: 15px;
+            margin-top: 10px;
         }
     </style>
+
+    <script>
+        function updatePotionInputs() {
+            const all = document.querySelectorAll('input[name="potions"]');
+            const selected = Array.from(all).filter(cb => cb.checked);
+            const container = document.getElementById("potion-input-area");
+            container.innerHTML = "";
+            container.classList.add("hidden");
+
+            all.forEach(cb => cb.disabled = selected.length >= 2 && !cb.checked);
+
+            if (selected.length === 2) {
+                const potionInfo = {
+                    red:    { name: "紅色藥水", img: "/static/docs/red.png", defaultPrice: 50 },
+                    orange: { name: "橘色藥水", img: "/static/docs/orange.png", defaultPrice: 160 },
+                    white:  { name: "白色藥水", img: "/static/docs/white.png", defaultPrice: 320 },
+                    blue:   { name: "藍色藥水", img: "/static/docs/blue.png", defaultPrice: 192 },
+                    energy: { name: "活力藥水", img: "/static/docs/vigor.png", defaultPrice: 604 }
+                };
+
+                selected.forEach(cb => {
+                    const key = cb.value;
+                    const p = potionInfo[key];
+                    const html = `
+                        <div class="potion-block">
+                            <img src="${p.img}" alt="${p.name}">
+                            <div>
+                                <strong>${p.name}</strong><br>
+                                起始：<input type="number" name="${key}_start" value="${p.defaultStart || ''}">
+                                剩餘：<input type="number" name="${key}_end" value="${p.defaultEnd || ''}"><br>
+                                單價：<input type="number" name="${key}_price" value="${p.defaultPrice}">
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML("beforeend", html);
+                });
+
+                container.classList.remove("hidden");
+            }
+        }
+    </script>
 </head>
 <body>
-    <div class="container">
-        <h1>💰 金幣與補品計算器</h1>
-        <form method="POST">
-            <label>目前金幣：
-                <input type="number" name="gold_end" required>
-            </label>
+<div class="container">
+    <h1>💰 金幣與補品計算器</h1>
+    <form method="POST">
+        <div class="flex-row">
+            <div class="left-col">
+                <label>起始金幣：
+                    <input type="number" name="gold_start" value="{{ request.form.gold_start or '' }}" required>
+                </label><br>
+                <label>目前金幣：
+                    <input type="number" name="gold_end" value="{{ request.form.gold_end or '' }}" required>
+                </label>
+                <hr>
+                <p>請選擇兩種使用的藥水（必選兩項）：</p>
+                {% set selected = request.form.getlist('potions') %}
+                <label><input type="checkbox" name="potions" value="red" {% if 'red' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/red.png">紅色藥水</label><br>
+                <label><input type="checkbox" name="potions" value="orange" {% if 'orange' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/orange.png">橘色藥水</label><br>
+                <label><input type="checkbox" name="potions" value="white" {% if 'white' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/white.png">白色藥水</label><br>
+                <label><input type="checkbox" name="potions" value="blue" {% if 'blue' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/blue.png">藍色藥水</label><br>
+                <label><input type="checkbox" name="potions" value="energy" {% if 'energy' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/vigor.png">活力藥水</label><br>
 
-            <label>剩餘 HM 數量：
-                <input type="number" name="hm_end" required>
-            </label>
+                <button type="submit">計算</button>
+                <button type="reset">🔄 重設</button>
+            </div>
 
-            <label>剩餘 PU 數量：
-                <input type="number" name="pu_end" required>
-            </label>
-
-            <button type="submit">計算</button>
-        </form>
-
-        {% if result %}
-        <div class="result">
-            <h2>🔎 計算結果：</h2>
-            <ul style="list-style-type:none; padding-left:0;">
-                <li>金幣增加：{{ result.gold_gain }} 元</li>
-                <li>HM 消耗：{{ result.hm_used }} 瓶（{{ result.hm_cost }} 元）</li>
-                <li>PU 消耗：{{ result.pu_used }} 瓶（{{ result.pu_cost }} 元）</li>
-                <li>總成本：{{ result.total_cost }} 元</li>
-                <li>淨利：{{ result.net_profit }} 元</li>
-            </ul>
-            <h3>{{ result.status }}</h3>
+            <div class="right-col" id="potion-input-area">
+                <!-- 藥水輸入區會由 JS 動態產生 -->
+            </div>
         </div>
-        {% endif %}
+    </form>
+
+    {% if result %}
+    <div class="result">
+        <h2>🔍 計算結果：</h2>
+        <ul>
+            <li>金幣增加：{{ result.gold_gain }} 金幣</li>
+            <li>總成本：{{ result.total_cost }} 金幣</li>
+            <li>淨利：{{ result.net_profit }} 金幣</li>
+        </ul>
+        <h3>{{ result.status }}</h3>
+        <hr>
+        <h4>各補品花費：</h4>
+        <ul>
+            {% for p in result.potions %}
+                <li>{{ p.name }}：消耗 {{ p.used }} 瓶，花費 {{ p.cost }} 金幣</li>
+            {% endfor %}
+        </ul>
     </div>
+    {% endif %}
+</div>
 </body>
 </html>

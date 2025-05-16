@@ -2,41 +2,56 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# 固定起始值
-GOLD_START = 80821
-HM_START = 150
-PU_START = 2094
-HM_PRICE = 600
-PU_PRICE = 50
-
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
 
+    potion_names = {
+        "red": "紅色藥水",
+        "orange": "橘色藥水",
+        "white": "白色藥水",
+        "blue": "藍色藥水",
+        "energy": "活力藥水"
+    }
+
     if request.method == "POST":
-        gold_end = int(request.form["gold_end"])
-        hm_end = int(request.form["hm_end"])
-        pu_end = int(request.form["pu_end"])
+        try:
+            gold_start = int(request.form.get("gold_start", 0))
+            gold_end = int(request.form.get("gold_end", 0))
+            gold_gain = gold_end - gold_start
+        except:
+            gold_start, gold_end, gold_gain = 0, 0, 0
 
-        gold_gain = gold_end - GOLD_START
-        hm_used = HM_START - hm_end
-        pu_used = PU_START - pu_end
-        hm_cost = hm_used * HM_PRICE
-        pu_cost = pu_used * PU_PRICE
-        total_cost = hm_cost + pu_cost
+        selected = request.form.getlist("potions")
+        total_cost = 0
+        potion_results = []
+
+        for key in selected:
+            try:
+                start = int(request.form.get(f"{key}_start", 0))
+                end = int(request.form.get(f"{key}_end", 0))
+                price = int(request.form.get(f"{key}_price", 0))
+                used = start - end
+                cost = used * price
+            except:
+                used, cost = 0, 0
+
+            total_cost += cost
+            potion_results.append({
+                "name": potion_names.get(key, key),
+                "used": used,
+                "cost": cost
+            })
+
         net_profit = gold_gain - total_cost
-
         status = "✅ 有賺錢！" if net_profit > 0 else "❌ 有虧損！" if net_profit < 0 else "⚖️ 剛好打平。"
 
         result = {
             "gold_gain": gold_gain,
-            "hm_used": hm_used,
-            "pu_used": pu_used,
-            "hm_cost": hm_cost,
-            "pu_cost": pu_cost,
             "total_cost": total_cost,
             "net_profit": net_profit,
-            "status": status
+            "status": status,
+            "potions": potion_results
         }
 
     return render_template("index.html", result=result)
