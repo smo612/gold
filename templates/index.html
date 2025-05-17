@@ -10,7 +10,7 @@
             padding: 40px;
             display: flex;
             justify-content: center;
-            font-size: 20px; /* 字體放大 */
+            font-size: 20px;
         }
 
         .container {
@@ -32,14 +32,36 @@
 
         .potion-block {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 35px;
         }
 
-        .potion-block img {
-            width: 64px;
-            height: 64px;
-            margin-right: 15px;
+        .potion-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .potion-img-wrapper img {
+            width: 96px;
+            height: 96px;
+        }
+
+        .potion-row input[type="number"] {
+            width: 80px;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .potion-label {
+            text-align: center;
+        }
+
+        input[type="number"] {
+            font-size: 18px;
         }
 
         .left-col img {
@@ -47,12 +69,6 @@
             height: 36px;
             vertical-align: middle;
             margin-right: 8px;
-        }
-
-        input[type="number"] {
-            width: 80px;
-            margin: 3px 6px;
-            font-size: 18px;
         }
 
         button {
@@ -81,6 +97,14 @@
         .result h3 {
             margin-top: 15px;
         }
+
+        select {
+            font-size: 18px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
@@ -94,6 +118,12 @@
                 </label><br>
                 <label>目前金幣：
                     <input type="number" name="gold_end" value="{{ request.form.gold_end or '' }}" required>
+                </label><br><br>
+                <label>價格模式：
+                    <select name="price_mode" id="price_mode" onchange="updatePotionInputs()">
+                        <option value="magic" {% if request.form.price_mode == 'magic' %}selected{% endif %}>魔法森林</option>
+                        <option value="toycity" {% if request.form.price_mode == 'toycity' or not request.form.price_mode %}selected{% endif %}>玩具城</option>
+                    </select>
                 </label>
                 <hr>
                 <p>請選擇兩種使用的藥水（必選兩項）：</p>
@@ -105,11 +135,10 @@
                 <label><input type="checkbox" name="potions" value="energy" {% if 'energy' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/vigor.png">活力藥水</label><br>
 
                 <button type="submit">📊 計算</button>
-                <!-- <button type="reset">🔄 重設</button> -->
             </div>
 
             <div class="right-col" id="potion-input-area">
-                <!-- JS 生成藥水欄位 -->
+                <!-- JS 動態產生內容 -->
             </div>
         </div>
     </form>
@@ -138,71 +167,86 @@
             const all = document.querySelectorAll('input[name="potions"]');
             const selected = Array.from(all).filter(cb => cb.checked);
             const container = document.getElementById("potion-input-area");
+            const mode = document.getElementById("price_mode").value;
             container.innerHTML = "";
             container.classList.add("hidden");
-    
+
             all.forEach(cb => cb.disabled = selected.length >= 2 && !cb.checked);
-    
+
             if (selected.length === 2) {
-                const potionInfo = {
-                    red:    { name: "紅色藥水", img: "/static/docs/red.png", defaultPrice: 50 },
-                    orange: { name: "橘色藥水", img: "/static/docs/orange.png", defaultPrice: 160 },
-                    white:  { name: "白色藥水", img: "/static/docs/white.png", defaultPrice: 320 },
-                    blue:   { name: "藍色藥水", img: "/static/docs/blue.png", defaultPrice: 192 },
-                    energy: { name: "活力藥水", img: "/static/docs/vigor.png", defaultPrice: 604 }
+                const prices = {
+                    magic:   { red: 50, orange: 160, white: 320, blue: 192, energy: 604 },
+                    toycity: { red: 47, orange: 152, white: 304, blue: 190, energy: 604 }
                 };
-    
-                // 將後端傳來的表單值取出放入 JS（避免 Jinja 和 JS 混用）
+
+                const potionInfo = {
+                    red:    { name: "紅色藥水", img: "/static/docs/red.png" },
+                    orange: { name: "橘色藥水", img: "/static/docs/orange.png" },
+                    white:  { name: "白色藥水", img: "/static/docs/white.png" },
+                    blue:   { name: "藍色藥水", img: "/static/docs/blue.png" },
+                    energy: { name: "活力藥水", img: "/static/docs/vigor.png" }
+                };
+
                 const formValues = {{ request.form|tojson }};
-    
+                const priceSet = prices[mode];
+
                 selected.forEach(cb => {
                     const key = cb.value;
                     const p = potionInfo[key];
-    
+
                     const startVal = formValues[`${key}_start`] || '';
                     const endVal = formValues[`${key}_end`] || '';
-                    const priceVal = formValues[`${key}_price`] || p.defaultPrice;
-    
-                    const html = `
-                        <div class="potion-block">
-                            <img src="${p.img}" alt="${p.name}">
-                            <div>
+                    const priceVal = formValues[`${key}_price`] || priceSet[key];
+
+                    let html = `
+                        <div class="potion-block" data-key="${key}">
+                            <div class="potion-row">
+                                <input type="number" name="${key}_start" value="${startVal}" placeholder="起始">
+                                <div class="potion-img-wrapper">
+                                    <img src="${p.img}" alt="${p.name}">
+                                </div>
+                                <input type="number" name="${key}_end" value="${endVal}" placeholder="剩餘">
+                            </div>
+                            <div class="potion-label">
                                 <strong>${p.name}</strong><br>
-                                起始：<input type="number" name="${key}_start" value="${startVal}">
-                                剩餘：<input type="number" name="${key}_end" value="${endVal}"><br>
                                 單價：<input type="number" name="${key}_price" value="${priceVal}">
                             </div>
                         </div>
                     `;
                     container.insertAdjacentHTML("beforeend", html);
                 });
-    
-                container.classList.remove("hidden");
-            }
-                        
-            {% if result %}
-                const imgBox = document.createElement("div");
-                imgBox.style.textAlign = "center";
-                imgBox.style.marginTop = "150px";
-                let imgPath = "";
-                {% if result.net_profit > 0 %}
-                    imgPath = "/static/docs/positive.png";
-                {% elif result.net_profit < 0 %}
-                    imgPath = "/static/docs/negative.png";
-                {% else %}
-                    imgPath = "/static/docs/equal.png";
+
+                // 結果圖移動到藍色藥水下方
+                {% if result %}
+                    const imgBox = document.createElement("div");
+                    imgBox.style.textAlign = "center";
+                    imgBox.style.marginTop = "15px";
+                    let imgPath = "";
+                    {% if result.net_profit > 0 %}
+                        imgPath = "/static/docs/positive.png";
+                    {% elif result.net_profit < 0 %}
+                        imgPath = "/static/docs/negative.png";
+                    {% else %}
+                        imgPath = "/static/docs/equal.png";
+                    {% endif %}
+                    imgBox.innerHTML = `<img src="${imgPath}" style="width: 480px;">`;
+
+                    const blueBlock = container.querySelector('.potion-block[data-key="blue"]');
+                    if (blueBlock) {
+                        blueBlock.insertAdjacentElement("afterend", imgBox);
+                    } else {
+                        container.appendChild(imgBox);
+                    }
                 {% endif %}
 
-                imgBox.innerHTML = `<img src="${imgPath}" style="width: 480px;">`;
-                container.appendChild(imgBox);
-            {% endif %}
+                container.classList.remove("hidden");
+            }
         }
-    
+
         window.addEventListener("DOMContentLoaded", function () {
             updatePotionInputs();
         });
     </script>
-    
 </div>
 </body>
 </html>
