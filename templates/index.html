@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>皮炎好痛</title>
+    <title>金幣與補品計算器</title>
     <style>
         body {
             font-family: "微軟正黑體", sans-serif;
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div class="container">
-    <h1>💰 算水錢</h1>
+    <h1>💰 金幣與補品計算器</h1>
     <form method="POST">
         <div class="flex-row">
             <div class="left-col">
@@ -133,7 +133,7 @@
                 <label><input type="checkbox" name="potions" value="white" {% if 'white' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/white.png">白色藥水</label><br>
                 <label><input type="checkbox" name="potions" value="blue" {% if 'blue' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/blue.png">藍色藥水</label><br>
                 <label><input type="checkbox" name="potions" value="energy" {% if 'energy' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/vigor.png">活力藥水</label><br>
-
+                <label><input type="checkbox" name="potions" value="hotdog" {% if 'hotdog' in selected %}checked{% endif %} onchange="updatePotionInputs()"><img src="/static/docs/hotdog.png">熱狗堡</label><br>
                 <button type="submit">📊 計算</button>
             </div>
 
@@ -175,8 +175,8 @@
 
             if (selected.length === 2) {
                 const prices = {
-                    magic:   { red: 50, orange: 160, white: 320, blue: 192, energy: 604 },
-                    toycity: { red: 47, orange: 152, white: 304, blue: 190, energy: 604 }
+                    magic:   { red: 50, orange: 160, white: 320, blue: 192, energy: 604, hotdog: 530 },
+                    toycity: { red: 47, orange: 152, white: 304, blue: 190, energy: 604, hotdog: 503 }
                 };
 
                 const potionInfo = {
@@ -184,7 +184,8 @@
                     orange: { name: "橘色藥水", img: "/static/docs/orange.png" },
                     white:  { name: "白色藥水", img: "/static/docs/white.png" },
                     blue:   { name: "藍色藥水", img: "/static/docs/blue.png" },
-                    energy: { name: "活力藥水", img: "/static/docs/vigor.png" }
+                    energy: { name: "活力藥水", img: "/static/docs/vigor.png" },
+                    hotdog: { name: "熱狗堡",     img: "/static/docs/hotdog.png" }
                 };
 
                 const formValues = {{ request.form|tojson }};
@@ -216,7 +217,6 @@
                     container.insertAdjacentHTML("beforeend", html);
                 });
 
-                // 結果圖移動到藍色藥水下方
                 {% if result %}
                     const imgBox = document.createElement("div");
                     imgBox.style.textAlign = "center";
@@ -231,9 +231,10 @@
                     {% endif %}
                     imgBox.innerHTML = `<img src="${imgPath}" style="width: 480px;">`;
 
-                    const blueBlock = container.querySelector('.potion-block[data-key="blue"]');
-                    if (blueBlock) {
-                        blueBlock.insertAdjacentElement("afterend", imgBox);
+                    const targetBlock = container.querySelector('.potion-block[data-key="hotdog"]') ||
+                                        container.querySelector('.potion-block[data-key="blue"]');
+                    if (targetBlock) {
+                        targetBlock.insertAdjacentElement("afterend", imgBox);
                     } else {
                         container.appendChild(imgBox);
                     }

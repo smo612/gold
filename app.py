@@ -12,7 +12,8 @@ def index():
         "orange": "橘色藥水",
         "white": "白色藥水",
         "blue": "藍色藥水",
-        "energy": "活力藥水"
+        "energy": "活力藥水",
+        "hotdog": "熱狗堡"
     }
 
     if request.method == "POST":
